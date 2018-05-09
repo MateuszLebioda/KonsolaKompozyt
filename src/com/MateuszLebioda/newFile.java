@@ -14,8 +14,8 @@ public abstract class newFile {
 
     public ArrayList<newFile> list = new ArrayList<>();
 
-    public String add(newFile file){return null;}
-    public void delByPath(String path){};
+    public boolean add(newFile file){return false;}
+    public boolean delByPath(String path){return  false;}
     public newFile getFileByPath(String path){return null;}
 
 

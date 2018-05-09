@@ -51,120 +51,97 @@ public class Console extends JComponent implements KeyListener{
             case KeyEvent.VK_ENTER:{
                 e.consume();
                 command = prepareCommand(content);
+                content = content.concat(command);
 
-                /*** change directory*/
+                /*** Change directory*/
                 if(CheckIf("cd")) {
 
-                    newFile temp = getFileByPath(command,"cd");
-                    content = content.concat(command);
-                    if (temp != null) {
+                    if (getFileByPathByCommend("cd") != null) {
                         globalPath = command.substring("cd".length()).replace(" ", "");
                     } else {
                         content = content.concat("\n" + "The system cannot find the drive specified..");
                     }
-                    setTextAndPath();
 
-                }else if(CheckIf("md")){
-                    String path = command.substring("md".length());
-                    path = path.replace(" ", "");
-                    String[] PathSplit = path.split("\\\\");
+                /*** Creates a directory or file*/
+                }else if(CheckIf("md")||CheckIf("fd")) {
+                    String path = getPathByCommend("md");
+                    String[] PathSplit = getSplitPathByCommend("md");
 
-                    if(PathSplit[0].equals("e:")||PathSplit[0].equals("c:")) {
-                        if (createCatalogByPath(path, "md")) {
-                            content = content.concat(command);
-                        }else {
-                            content = content.concat(command + "\nThe system cannot find the path specified.");
+                    if (!(PathSplit[0].equals("e:") || PathSplit[0].equals("c:"))) {
+                        path = globalPath.concat("\\" + path);
+                    }
+                        /*** Create directory */
+                    if (command.substring(0, 2).equals("md")) {
+                        if (!createCatalogByPath(path)) {
+                            content = content.concat("\nThe system cannot find the path specified.");
                         }
-                    }else {
-                        String path1 = globalPath.concat( "\\" + path);
-                        if (createCatalogByPath(path1, "md")) {
-                            content = content.concat(command);
-                        }else {
-                            content = content.concat(command + "\nThe system cannot find the path specified.");
+                        /*** Create file */
+                    } else if (command.substring(0, 2).equals("fd")) {
+                        if (!createFileByPath(path, "fd")) {
+                            content = content.concat("\nThe system cannot find the path specified.");
                         }
                     }
-                        setTextAndPath();
+                }
 
-                }else if(CheckIf("fd")){
-                    String path = command.substring("fd".length());
-                    path = path.replace(" ", "");
-                    String[] PathSplit = path.split("\\\\");
+                /*** Displays a list of files and subdirectories in a directory */
+                else if(CheckIf("dir")){
 
-                    if(PathSplit[0].equals("e:")||PathSplit[0].equals("c:")) {
-                        if (createCatalogByPath(path, "md")) {
-                            content = content.concat(command);
-                        }else {
-                            content = content.concat(command + "\nThe system cannot find the path specified.");
-                        }
-                    }else {
-                        String path1 = globalPath.concat( "\\" + path);
-                        if (createFileByPath(path1, "fd")) {
-                            content = content.concat(command);
-                        }else {
-                            content = content.concat(command + "\nThe system cannot find the path specified.");
-                        }
+                    String[] PathSplit = getSplitPathByCommend("dir");
+                    newFile temp = search(PathSplit);
+
+                    if(getPathByCommend("dir").equals("")){
+                        PathSplit = globalPath.split("\\\\");
+                        temp = search(PathSplit);
                     }
-                    setTextAndPath();
 
-                }else if(CheckIf("dir")){
-                    String path = command.substring("dir".length());
-                    if("".equals(path)){
-                        String[] PathSplit = globalPath.split("\\\\");
-                        newFile temp = search(PathSplit,PathSplit.length);
-                        if(temp!=null){
-                            content = content.concat(command + "\n" +  search(PathSplit,PathSplit.length).draw(-1));
-                        }else{
-                            content = content.concat(command + "\n" + "The system cannot find the drive specified..");
-                        }
-                        setTextAndPath();
-
+                    if(temp!=null){
+                        content = content.concat(search(PathSplit).draw(-1));
                     }else{
-                        path = path.replace(" ","");
-                        String[] PathSplit = path.split("\\\\");
-                        newFile temp = search(PathSplit,PathSplit.length);
-                        if(temp!=null){
-                            content = content.concat(command + "\n" +  search(PathSplit,PathSplit.length).draw(-1));
-                        }else{
-                            content = content.concat(command + "\n" + "The system cannot find the drive specified..");
-                        }
-
-                        setTextAndPath();
+                        content = content.concat("\n" + "The system cannot find the drive specified..");
                     }
-                }else if(CheckIf("dir")){
+
+                /***Copies one file to another location*/
+                }else if(CheckIf("copy")||CheckIf("move")){
                     String path = command.substring("copy".length());
                     String[] PathSplit1 = path.split(" ");
                     if(PathSplit1.length!=3){
-                        content = content.concat(command + "\n" + "The system cannot find the drive specified..");
+                        content = content.concat("\n" + "The system cannot find the drive specified..");
                     }else{
-                        String[] PathSplit = PathSplit1[1].split("\\\\");
+                        String[] PathSplitCopied = PathSplit1[1].split("\\\\");
 
-                        newFile copied = search(PathSplit,PathSplit.length);
-                        PathSplit = PathSplit1[2].split("\\\\");
-                        newFile target = search(PathSplit,PathSplit.length);
-                        target.add(copied);
+                        newFile copied = search(PathSplitCopied);
+                        /***Move one file to another location*/
 
-                        content = content.concat(command);
+                        String []PathSplitTarget = PathSplit1[2].split("\\\\");
+                        newFile target = search(PathSplitTarget);
+
+                        if(target.add(copied)&&command.substring(0,"move".length()).equals("move")){
+                            deleteCatalog(PathSplitCopied);
+                        }else{
+                            content = content.concat("\n" + "Catalog or folder with that name already exist");
+                        }
                     }
-                    setTextAndPath();
+
 
                 }
                 else if(CheckIf("cls")) {
                     content = "Microsoft Windows [Version 10.0.16299.371]" + "\n" + "(c) 2017 Microsoft Corporation. All rights reserved.\n";
-                    setTextAndPath();
-                }else if(command.length()>=4&&command.equals("help")){
-                    content = content.concat(command.concat( "\nCLS - Clears the screen." +
-                                                    "\nDIR - Displays a list of files and subdirectories in a directory.." +
-                                                    "\nCD - Displays the name of or changes the current directory." +
-                                                    "\nMD - Creates a directory." +
-                                                    "\nFD - Creates a file.") +
-                                                    "\nCOPY - Copies one file to another location." +
-                                                    "\nMOVE - Moves one file from one directory to another directory.");
-                    setTextAndPath();
+
+
+                } else if(CheckIf("help")){
+                    content = content + "\n  CLS - Clears the screen." +
+                                        "\n  DIR - Displays a list of files and subdirectories in a directory.." +
+                                        "\n  CD - Displays the name of or changes the current directory." +
+                                        "\n  MD - Creates a directory." +
+                                        "\n  FD - Creates a file." +
+                                        "\n  COPY - Copies one file to another location." +
+                                        "\n  MOVE - Moves one file from one directory to another directory.";
+
+
+                } else {
+                    content = content + "\n\'" + command + "\' " +  "is not recognized as an internal or external command, \n operable program or batch file.";
                 }
-                else {
-                    content = content + command  + "\n\'" + command + "\'" +  "is not recognized as an internal or external command, \n operable program or batch file.";
-                    setTextAndPath();
-                }
+                setTextAndPath();
                 break;
 
             }case KeyEvent.VK_BACK_SPACE:{
@@ -182,7 +159,6 @@ public class Console extends JComponent implements KeyListener{
         command.toLowerCase();
         return command;
     }
-
     private void setTextAndPath(){
         content = content.concat("\n" + globalPath + "\\>");
         editorPane1.setText(content);
@@ -192,10 +168,19 @@ public class Console extends JComponent implements KeyListener{
             return true;
         }return false;
     }
+    private newFile getFileByPathByCommend(String commandName){
+        return  search(getSplitPathByCommend(commandName));
 
-    private newFile search(String path[],int iterations){
+    }
+    private String[] getSplitPathByCommend(String commandName){
+        return getPathByCommend(commandName).split("\\\\");
+    }
+    private String getPathByCommend(String commandName){
+        return command.substring(commandName.length()).replace(" ","");
+    }
+    private newFile search(String path[]){
         newFile temp = hardDisc;
-        for(int i =0;i<iterations;i++){
+        for(int i =0;i<path.length;i++){
             if(temp.getFileByPath(path[i])!=null){
                 temp = temp.getFileByPath(path[i]);
             }else{
@@ -204,17 +189,7 @@ public class Console extends JComponent implements KeyListener{
         }
         return temp;
     }
-
-    private newFile getFileByPath(String commend,String size){
-        String path = commend.substring(size.length());
-        path = path.replace(" ", "");
-        String[] PathSplit = path.split("\\\\");
-        newFile temp = search(PathSplit, PathSplit.length);
-        return temp;
-    }
-
-    private boolean createCatalogByPath(String path, String size) {
-
+    private boolean createCatalogByPath(String path) {
         String[] PathSplit = path.split("\\\\");
         newFile temp = hardDisc;
         boolean x;
@@ -229,11 +204,12 @@ public class Console extends JComponent implements KeyListener{
                 if(!temp.cat) return false;
             } else {
                 Catalog catalog = new Catalog(PathSplit[i]);
-                temp.add(catalog);
-                temp = catalog;
+                if(temp.add(catalog)) {
+                    return true;
+                }
             }
         }
-        return true;
+        return false;
     }
     private boolean createFileByPath(String path, String size) {
         String[] PathSplit = path.split("\\\\");
@@ -262,19 +238,32 @@ public class Console extends JComponent implements KeyListener{
         hardDisc = new Catalog("");
         hardDisc.add(new Catalog("e:"));
         hardDisc.add(new Catalog("c:"));
-        hardDisc.getFileByPath("e:").add(new com.MateuszLebioda.File("file"));
-        hardDisc.getFileByPath("e:").add(new com.MateuszLebioda.File("file2"));
-        hardDisc.getFileByPath("e:").add(new Catalog("dir1"));
+        hardDisc.getFileByPath("e:").add(new com.MateuszLebioda.File("1"));
+        hardDisc.getFileByPath("e:").add(new com.MateuszLebioda.File("2"));
+        hardDisc.getFileByPath("e:").add(new Catalog("1"));
 
-        hardDisc.getFileByPath("c:").add(new Catalog("dir1"));
-        hardDisc.getFileByPath("c:").getFileByPath("dir1").add(new com.MateuszLebioda.File("file3"));
-        hardDisc.getFileByPath("c:").getFileByPath("dir1").add(new com.MateuszLebioda.File("file4"));
-        hardDisc.getFileByPath("c:").getFileByPath("dir1").add(new Catalog("catalog"));
-        hardDisc.getFileByPath("c:").getFileByPath("dir1").getFileByPath("catalog").add(new com.MateuszLebioda.File("file"));
-        hardDisc.getFileByPath("c:").getFileByPath("dir1").getFileByPath("catalog").add(new Catalog("catalog11"));
-        hardDisc.getFileByPath("c:").add(new Catalog("dir2"));
-        hardDisc.getFileByPath("c:").getFileByPath("dir2").add(new com.MateuszLebioda.File("file4"));
-        hardDisc.getFileByPath("c:").getFileByPath("dir2").add(new com.MateuszLebioda.File("file5"));
+        hardDisc.getFileByPath("c:").add(new Catalog("1"));
+        hardDisc.getFileByPath("c:").getFileByPath("1").add(new com.MateuszLebioda.File("3"));
+        hardDisc.getFileByPath("c:").getFileByPath("1").add(new com.MateuszLebioda.File("4"));
+        hardDisc.getFileByPath("c:").getFileByPath("1").add(new Catalog("2"));
+        hardDisc.getFileByPath("c:").getFileByPath("1").getFileByPath("2").add(new com.MateuszLebioda.File("1"));
+        hardDisc.getFileByPath("c:").getFileByPath("1").getFileByPath("2").add(new Catalog("11"));
+        hardDisc.getFileByPath("c:").add(new Catalog("2"));
+        hardDisc.getFileByPath("c:").getFileByPath("2").add(new com.MateuszLebioda.File("22"));
+        hardDisc.getFileByPath("c:").getFileByPath("2").add(new com.MateuszLebioda.File("22"));
+    }
+
+    private boolean deleteCatalog(String path[]){
+        newFile temp = hardDisc;
+        int i=0;
+        for(;i<path.length-1;i++){
+            if(temp.getFileByPath(path[i])!=null){
+                temp = temp.getFileByPath(path[i]);
+            }else{
+                return false;
+            }
+        }
+        return temp.delByPath(path[i]);
     }
 
     @Override

@@ -6,50 +6,47 @@ public class Catalog extends newFile {
         cat = true;
     }
 
-    public newFile getCatalog(String path) {
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).path.equals(path)){
-                return this;
-            }
-        }
-        return null;
-    }
-
-    public String add(newFile file) {
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).path.equals(file.path))
-                return "Nie mozna utworzyc katalogu. Katalog o takiej nazwie juz istnieje.";
+    public boolean add(newFile file) {
+        for (newFile aList : list) {
+            if (aList.path.equals(file.path))
+                return false;
         }
         list.add(file);
-        return "Katalog zosta pomyslnie utworzony.";
+        return true;
     }
 
     public newFile getFileByPath(String path) {
-        for(int i = 0; i < list.size(); i++) {
-            if (list.get(i).path.equals(path))
-                return list.get(i);
+        for (newFile aList : list) {
+            if (aList.path.equals(path))
+                return aList;
         }
         return null;
     }
 
     @Override
-    public void delByPath(String path) {
+    public boolean delByPath(String path) {
         int x = 0;
+        boolean exist = false;
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).path.equals(path))
+            if (list.get(i).path.equals(path)) {
                 x = i;
+                exist = true;
+            }
         }
-        list.remove(x);
+        if(exist){
+            list.remove(x);
+            return true;
+        }return false;
     }
 
     @Override
     public String draw(int paragraphSize) {
-        String paragraph = "";
+        String paragraph = "\n";
         paragraphSize++;
         for (int i = 0; i < paragraphSize; i++) {
             paragraph = paragraph + "   ";
         }
-        paragraph = paragraph.concat("*" + this.path.concat("\n"));
+        paragraph = paragraph.concat("*" + this.path);
 
         for (newFile list : list) {
             paragraph = paragraph.concat(list.draw(paragraphSize));
